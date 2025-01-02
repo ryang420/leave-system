@@ -82,3 +82,9 @@ async def websocket_endpoint(websocket: WebSocket, username: str):
 @app.get("/")
 async def root():
     return {"message": "Leave Request System API"}
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(app, host="0.0.0.0", port=8000)

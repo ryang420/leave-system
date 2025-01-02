@@ -1,182 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Container, Paper, TextField, Button, List, ListItem, ListItemText, Typography, Dialog, DialogTitle, DialogContent, DialogActions, Box, IconButton, Avatar } from '@mui/material';
-import { styled, alpha } from '@mui/material/styles';
-import SendIcon from '@mui/icons-material/Send';
-import PersonIcon from '@mui/icons-material/Person';
-
-const AppContainer = styled(Container)(({ theme }) => ({
-  minHeight: '100vh',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  padding: theme.spacing(4),
-  background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-}));
-
-const ChatContainer = styled(Box)(({ theme }) => ({
-  width: '100%',
-  height: '90vh',
-  maxHeight: '1200px',
-  minHeight: '800px',
-  display: 'flex',
-  gap: theme.spacing(3),
-}));
-
-const MainChat = styled(Paper)(({ theme }) => ({
-  flex: '1 1 auto',
-  maxWidth: '75%',
-  display: 'flex',
-  flexDirection: 'column',
-  overflow: 'hidden',
-  borderRadius: theme.spacing(2),
-  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-  background: alpha('#fff', 0.8),
-  backdropFilter: 'blur(10px)',
-}));
-
-const ChatHeader = styled(Box)(({ theme }) => ({
-  padding: theme.spacing(3),
-  borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-  background: alpha(theme.palette.primary.main, 0.05),
-}));
-
-const MessageContainer = styled(Box)(({ theme }) => ({
-  flex: 1,
-  padding: theme.spacing(4),
-  overflowY: 'auto',
-  display: 'flex',
-  flexDirection: 'column',
-  gap: theme.spacing(3),
-  '&::-webkit-scrollbar': {
-    width: '8px',
-  },
-  '&::-webkit-scrollbar-track': {
-    background: 'transparent',
-  },
-  '&::-webkit-scrollbar-thumb': {
-    background: alpha(theme.palette.primary.main, 0.2),
-    borderRadius: '4px',
-    '&:hover': {
-      background: alpha(theme.palette.primary.main, 0.3),
-    },
-  },
-}));
-
-const MessageBubble = styled(Box)(({ theme, isself }) => ({
-  maxWidth: '60%',
-  minWidth: '200px',
-  alignSelf: isself ? 'flex-end' : 'flex-start',
-  display: 'flex',
-  flexDirection: 'column',
-  gap: theme.spacing(0.5),
-  animation: isself ? 'slideLeft 0.3s ease' : 'slideRight 0.3s ease',
-  '@keyframes slideRight': {
-    from: { transform: 'translateX(-20px)', opacity: 0 },
-    to: { transform: 'translateX(0)', opacity: 1 },
-  },
-  '@keyframes slideLeft': {
-    from: { transform: 'translateX(20px)', opacity: 0 },
-    to: { transform: 'translateX(0)', opacity: 1 },
-  },
-}));
-
-const MessageContent = styled(Paper)(({ theme, isself }) => ({
-  padding: theme.spacing(2, 3),
-  borderRadius: theme.spacing(2),
-  background: isself ? theme.palette.primary.main : '#fff',
-  color: isself ? '#fff' : 'inherit',
-  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-  position: 'relative',
-  fontSize: '1rem',
-  lineHeight: 1.5,
-  '&:before': {
-    content: '""',
-    position: 'absolute',
-    bottom: '12px',
-    [isself ? 'right' : 'left']: -10,
-    borderStyle: 'solid',
-    borderWidth: '10px 10px 0',
-    borderColor: `${isself ? theme.palette.primary.main : '#fff'} transparent transparent`,
-    transform: isself ? 'rotate(-45deg)' : 'rotate(45deg)',
-  },
-}));
-
-const SystemMessage = styled(Typography)(({ theme }) => ({
-  textAlign: 'center',
-  color: theme.palette.text.secondary,
-  padding: theme.spacing(1.5),
-  margin: theme.spacing(1.5, 0),
-  fontSize: '0.95rem',
-  fontStyle: 'italic',
-  background: alpha(theme.palette.primary.main, 0.05),
-  borderRadius: theme.spacing(1.5),
-  maxWidth: '70%',
-  alignSelf: 'center',
-  animation: 'fadeIn 0.5s ease',
-  '@keyframes fadeIn': {
-    from: { opacity: 0, transform: 'translateY(-10px)' },
-    to: { opacity: 1, transform: 'translateY(0)' },
-  },
-}));
-
-const UsersList = styled(Paper)(({ theme }) => ({
-  width: '350px',
-  borderRadius: theme.spacing(2),
-  overflow: 'hidden',
-  background: alpha('#fff', 0.8),
-  backdropFilter: 'blur(10px)',
-  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-  display: 'flex',
-  flexDirection: 'column',
-}));
-
-const UsersHeader = styled(Box)(({ theme }) => ({
-  padding: theme.spacing(3),
-  background: alpha(theme.palette.primary.main, 0.1),
-  borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-}));
-
-const UserListContent = styled(List)(({ theme }) => ({
-  flex: 1,
-  overflowY: 'auto',
-  padding: theme.spacing(2),
-  '&::-webkit-scrollbar': {
-    width: '6px',
-  },
-  '&::-webkit-scrollbar-track': {
-    background: 'transparent',
-  },
-  '&::-webkit-scrollbar-thumb': {
-    background: alpha(theme.palette.primary.main, 0.2),
-    borderRadius: '3px',
-    '&:hover': {
-      background: alpha(theme.palette.primary.main, 0.3),
-    },
-  },
-}));
-
-const InputContainer = styled(Box)(({ theme }) => ({
-  padding: theme.spacing(3),
-  borderTop: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-  background: alpha('#fff', 0.5),
-}));
-
-const StyledDialog = styled(Dialog)(({ theme }) => ({
-  '& .MuiDialog-paper': {
-    borderRadius: theme.spacing(2),
-    padding: theme.spacing(3),
-    background: alpha('#fff', 0.9),
-    backdropFilter: 'blur(10px)',
-    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-    minWidth: '400px',
-  },
-}));
 
 function App() {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [username, setUsername] = useState('');
-  const [showDialog, setShowDialog] = useState(true);
+  const [tempUsername, setTempUsername] = useState(''); 
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [wsConnection, setWsConnection] = useState(null);
   const messageContainerRef = useRef(null);
@@ -187,56 +15,48 @@ function App() {
     }
   }, [messages]);
 
-  const connectWebSocket = (username) => {
-    const ws = new WebSocket(`ws://localhost:8000/ws/${username}`);
+  const connectWebSocket = (user) => {
+    const ws = new WebSocket(`ws://localhost:8000/ws/${user}`);
+    ws.onopen = () => {
+      console.log('WebSocket connection established');
+      ws.send(JSON.stringify({ type: 'join', username: user }));
+    };
 
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      
-      switch(data.type) {
-        case 'chat':
-          setMessages(prev => [...prev, {
-            type: 'chat',
-            sender: data.sender,
-            content: data.content,
-            timestamp: data.timestamp
-          }]);
-          break;
-        case 'system':
-          setMessages(prev => [...prev, {
-            type: 'system',
-            content: data.content
-          }]);
-          break;
-        case 'users':
-          setOnlineUsers(data.users);
-          break;
+      if (data.type === 'users') {
+        setOnlineUsers(data.users);
+      } else if (data.type === 'chat') {
+        setMessages(prev => [...prev, data]);
+      } else if (data.type === 'system') {
+        setMessages(prev => [...prev, { type: 'system', content: data.content }]);
       }
     };
 
     ws.onclose = () => {
       console.log('WebSocket connection closed');
-      setShowDialog(true);
+      setUsername('');
+      setWsConnection(null);
     };
 
     setWsConnection(ws);
   };
 
   const handleJoin = () => {
-    if (username.trim()) {
-      connectWebSocket(username);
-      setShowDialog(false);
+    if (tempUsername.trim()) {
+      setUsername(tempUsername);
+      connectWebSocket(tempUsername);
     }
   };
 
   const handleSendMessage = (e) => {
     e.preventDefault();
-    if (newMessage.trim() && wsConnection) {
-      const messageData = {
+    if (wsConnection && newMessage.trim()) {
+      wsConnection.send(JSON.stringify({
+        type: 'chat',
         content: newMessage,
-        timestamp: new Date().toISOString()
-      };
-      wsConnection.send(JSON.stringify(messageData));
+        timestamp: new Date().toLocaleTimeString(),
+      }));
       setNewMessage('');
     }
   };
@@ -249,174 +69,96 @@ function App() {
   };
 
   return (
-    <AppContainer maxWidth="xl">
-      <ChatContainer>
-        <MainChat elevation={0}>
-          <ChatHeader>
-            <Typography variant="h5" sx={{ fontWeight: 500 }}>
-              Leave Request System Chat
-            </Typography>
-          </ChatHeader>
-          <MessageContainer ref={messageContainerRef}>
+    <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-300 flex items-center justify-center p-4">
+      <div className="w-full max-w-6xl h-[90vh] min-h-[800px] max-h-[1200px] flex gap-3">
+        <main className="flex-1 max-w-[75%] flex flex-col overflow-hidden rounded-2xl shadow-xl bg-white/80 backdrop-blur-sm">
+          <header className="p-6 border-b border-gray-200/10 bg-primary/5">
+            <h1 className="text-2xl font-semibold text-gray-800">Leave Request System Chat</h1>
+          </header>
+
+          <div className="flex-1 p-6 overflow-y-auto space-y-4" style={{ scrollbarWidth: 'thin' }} ref={messageContainerRef}>
             {messages.map((msg, index) => (
               msg.type === 'system' ? (
-                <SystemMessage key={index}>
+                <div key={index} className="text-center text-gray-500 italic p-2 bg-primary/5 rounded-lg">
                   {msg.content}
-                </SystemMessage>
+                </div>
               ) : (
-                <MessageBubble key={index} isself={msg.sender === username}>
-                  <Typography 
-                    variant="subtitle2" 
-                    sx={{ 
-                      px: 1.5, 
-                      color: 'text.secondary',
-                      fontWeight: 500
-                    }}
-                  >
-                    {msg.sender}
-                  </Typography>
-                  <MessageContent isself={msg.sender === username}>
-                    <Typography>{msg.content}</Typography>
-                  </MessageContent>
-                  <Typography 
-                    variant="caption" 
-                    sx={{ 
-                      px: 1.5, 
-                      color: 'text.secondary',
-                      alignSelf: msg.sender === username ? 'flex-end' : 'flex-start',
-                      fontSize: '0.85rem'
-                    }}
-                  >
-                    {new Date(msg.timestamp).toLocaleTimeString([], {
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </Typography>
-                </MessageBubble>
+                <div key={index} className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center">
+                    {msg.sender[0].toUpperCase()}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-baseline gap-2">
+                      <span className="font-medium text-gray-900">{msg.sender}</span>
+                      <span className="text-sm text-gray-500">
+                        {msg.timestamp}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-gray-700">{msg.content}</p>
+                  </div>
+                </div>
               )
             ))}
-          </MessageContainer>
-          <InputContainer>
-            <Box component="form" onSubmit={handleSendMessage} sx={{ display: 'flex', gap: 2 }}>
-              <TextField
-                fullWidth
-                variant="outlined"
-                size="medium"
+          </div>
+
+          <form onSubmit={handleSendMessage} className="p-4 border-t border-gray-200/10">
+            <div className="flex gap-2">
+              <input
+                type="text"
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Type a message..."
+                placeholder="Type your message..."
+                className="input flex-1"
                 disabled={!wsConnection}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 3,
-                    backgroundColor: alpha('#fff', 0.8),
-                    fontSize: '1rem',
-                  }
-                }}
               />
-              <IconButton 
-                type="submit" 
-                color="primary" 
-                disabled={!wsConnection || !newMessage.trim()}
-                sx={{ 
-                  width: 56,
-                  height: 56,
-                  bgcolor: theme => alpha(theme.palette.primary.main, 0.1),
-                  '&:hover': { 
-                    bgcolor: theme => alpha(theme.palette.primary.main, 0.2)
-                  }
-                }}
-              >
-                <SendIcon />
-              </IconButton>
-            </Box>
-          </InputContainer>
-        </MainChat>
+              <button type="submit" className="btn btn-primary" disabled={!wsConnection || !newMessage.trim()}>
+                Send
+              </button>
+            </div>
+          </form>
+        </main>
 
-        <UsersList elevation={0}>
-          <UsersHeader>
-            <Typography variant="h6" sx={{ fontWeight: 500 }}>
-              Online Users ({onlineUsers.length})
-            </Typography>
-          </UsersHeader>
-          <UserListContent>
+        <aside className="w-1/4 bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-6">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">Online Users ({onlineUsers.length})</h2>
+          <div className="space-y-2">
             {onlineUsers.map((user) => (
-              <ListItem key={user} sx={{ py: 1.5 }}>
-                <Avatar 
-                  sx={{ 
-                    mr: 2,
-                    width: 48,
-                    height: 48,
-                    bgcolor: user === username ? 'primary.main' : 'grey.300',
-                    fontSize: '1.2rem'
-                  }}
-                >
-                  <PersonIcon fontSize="inherit" />
-                </Avatar>
-                <ListItemText 
-                  primary={user} 
-                  secondary={user === username ? '(You)' : null}
-                  primaryTypographyProps={{
-                    fontWeight: user === username ? 600 : 400,
-                    fontSize: '1.1rem'
-                  }}
-                  secondaryTypographyProps={{
-                    fontSize: '0.9rem'
-                  }}
-                />
-              </ListItem>
+              <div key={user} className="flex items-center gap-3 p-2 hover:bg-gray-100 rounded-lg">
+                <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center">
+                  {user[0]}
+                </div>
+                <span className="text-gray-700">{user}</span>
+                {user === username && <span className="text-sm text-gray-500">(You)</span>}
+              </div>
             ))}
-          </UserListContent>
-        </UsersList>
-      </ChatContainer>
+          </div>
+        </aside>
+      </div>
 
-      <StyledDialog open={showDialog} onClose={() => {}} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ 
-          textAlign: 'center', 
-          fontWeight: 500,
-          fontSize: '1.5rem',
-          pb: 1
-        }}>
-          Join the Chat
-        </DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            fullWidth
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleJoin()}
-            placeholder="Enter your username..."
-            sx={{
-              mt: 3,
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 2,
-                fontSize: '1.1rem',
-              }
-            }}
-          />
-        </DialogContent>
-        <DialogActions sx={{ justifyContent: 'center', pb: 3, pt: 2 }}>
-          <Button 
-            onClick={handleJoin} 
-            disabled={!username.trim()}
-            variant="contained"
-            size="large"
-            sx={{ 
-              borderRadius: 2,
-              px: 6,
-              py: 1.5,
-              textTransform: 'none',
-              fontSize: '1.1rem'
-            }}
-          >
-            Join Chat
-          </Button>
-        </DialogActions>
-      </StyledDialog>
-    </AppContainer>
+      {!username && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4">Join the Chat</h2>
+            <input
+              type="text"
+              value={tempUsername}
+              onChange={(e) => setTempUsername(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleJoin()}
+              placeholder="Enter your username..."
+              className="input mb-4"
+              autoFocus
+            />
+            <button
+              onClick={handleJoin}
+              className="btn btn-primary w-full"
+              disabled={!tempUsername.trim()}
+            >
+              Join Chat
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
