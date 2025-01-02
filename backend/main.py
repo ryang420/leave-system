@@ -14,6 +14,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 # Store active connections and their usernames
 class ConnectionManager:
     def __init__(self):
@@ -25,10 +26,9 @@ class ConnectionManager:
         self.active_connections[username] = websocket
         self.usernames[websocket] = username
         await self.broadcast_user_list()
-        await self.broadcast_message({
-            "type": "system",
-            "content": f"{username} joined the chat"
-        })
+        await self.broadcast_message(
+            {"type": "system", "content": f"{username} joined the chat"}
+        )
 
     async def disconnect(self, websocket: WebSocket):
         username = self.usernames.get(websocket)
@@ -36,10 +36,9 @@ class ConnectionManager:
             del self.active_connections[username]
             del self.usernames[websocket]
             await self.broadcast_user_list()
-            await self.broadcast_message({
-                "type": "system",
-                "content": f"{username} left the chat"
-            })
+            await self.broadcast_message(
+                {"type": "system", "content": f"{username} left the chat"}
+            )
 
     async def broadcast_message(self, message: dict):
         for connection in self.active_connections.values():
@@ -52,14 +51,13 @@ class ConnectionManager:
         users = list(self.active_connections.keys())
         for connection in self.active_connections.values():
             try:
-                await connection.send_json({
-                    "type": "users",
-                    "users": users
-                })
+                await connection.send_json({"type": "users", "users": users})
             except WebSocketDisconnect:
                 pass
 
+
 manager = ConnectionManager()
+
 
 @app.websocket("/ws/{username}")
 async def websocket_endpoint(websocket: WebSocket, username: str):
@@ -68,14 +66,17 @@ async def websocket_endpoint(websocket: WebSocket, username: str):
         while True:
             data = await websocket.receive_text()
             message = json.loads(data)
-            await manager.broadcast_message({
-                "type": "chat",
-                "sender": username,
-                "content": message.get("content", ""),
-                "timestamp": message.get("timestamp", "")
-            })
+            await manager.broadcast_message(
+                {
+                    "type": "chat",
+                    "sender": username,
+                    "content": message.get("content", ""),
+                    "timestamp": message.get("timestamp", ""),
+                }
+            )
     except WebSocketDisconnect:
         await manager.disconnect(websocket)
+
 
 # FastAPI routes
 @app.get("/")
