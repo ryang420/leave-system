@@ -24,4 +24,4 @@ dist-ssr
 *.sw?
 
 # ignore .venv in backend
-.venv
+.venv/
