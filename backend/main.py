@@ -1,67 +1,83 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-import socketio
-from typing import Dict, Set
+from typing import Dict, List
+import json
 
-# Create a Socket.IO server
-sio = socketio.AsyncServer(
-    async_mode='asgi',
-    cors_allowed_origins=['http://localhost:5173']  # Only define CORS here
-)
-
-# Create FastAPI app
 app = FastAPI()
 
-# Create Socket.IO app
-socket_app = socketio.ASGIApp(sio, app)
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-# Store active users and their session IDs
-active_users: Dict[str, str] = {}  # {sid: username}
-online_users: Set[str] = set()
+# Store active connections and their usernames
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: Dict[str, WebSocket] = {}
+        self.usernames: Dict[WebSocket, str] = {}
 
-# Socket.IO events
-@sio.event
-async def connect(sid, environ):
-    print(f"Client connected: {sid}")
-
-@sio.event
-async def disconnect(sid):
-    if sid in active_users:
-        username = active_users[sid]
-        online_users.remove(username)
-        del active_users[sid]
-        await sio.emit('user_left', {'username': username, 'online_users': list(online_users)})
-    print(f"Client disconnected: {sid}")
-
-@sio.event
-async def join(sid, data):
-    username = data.get('username')
-    if username:
-        active_users[sid] = username
-        online_users.add(username)
-        # Notify all clients about the new user
-        await sio.emit('user_joined', {
-            'username': username,
-            'online_users': list(online_users)
+    async def connect(self, websocket: WebSocket, username: str):
+        await websocket.accept()
+        self.active_connections[username] = websocket
+        self.usernames[websocket] = username
+        await self.broadcast_user_list()
+        await self.broadcast_message({
+            "type": "system",
+            "content": f"{username} joined the chat"
         })
-        return {'status': 'success', 'online_users': list(online_users)}
-    return {'status': 'error', 'message': 'Username is required'}
 
-@sio.event
-async def message(sid, data):
-    if sid in active_users:
-        username = active_users[sid]
-        message_data = {
-            'username': username,
-            'message': data['message'],
-            'timestamp': data['timestamp']
-        }
-        await sio.emit('message', message_data)
+    async def disconnect(self, websocket: WebSocket):
+        username = self.usernames.get(websocket)
+        if username:
+            del self.active_connections[username]
+            del self.usernames[websocket]
+            await self.broadcast_user_list()
+            await self.broadcast_message({
+                "type": "system",
+                "content": f"{username} left the chat"
+            })
+
+    async def broadcast_message(self, message: dict):
+        for connection in self.active_connections.values():
+            try:
+                await connection.send_json(message)
+            except WebSocketDisconnect:
+                pass
+
+    async def broadcast_user_list(self):
+        users = list(self.active_connections.keys())
+        for connection in self.active_connections.values():
+            try:
+                await connection.send_json({
+                    "type": "users",
+                    "users": users
+                })
+            except WebSocketDisconnect:
+                pass
+
+manager = ConnectionManager()
+
+@app.websocket("/ws/{username}")
+async def websocket_endpoint(websocket: WebSocket, username: str):
+    await manager.connect(websocket, username)
+    try:
+        while True:
+            data = await websocket.receive_text()
+            message = json.loads(data)
+            await manager.broadcast_message({
+                "type": "chat",
+                "sender": username,
+                "content": message.get("content", ""),
+                "timestamp": message.get("timestamp", "")
+            })
+    except WebSocketDisconnect:
+        await manager.disconnect(websocket)
 
 # FastAPI routes
 @app.get("/")
 async def root():
     return {"message": "Leave Request System API"}
-
-# Mount Socket.IO app
-app.mount("/ws", socket_app)

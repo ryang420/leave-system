@@ -1,80 +1,101 @@
-# Leave Request System Chat
+# Leave Request System
 
-A real-time chat application built with React and FastAPI, designed for leave request communication.
+A modern leave request system with real-time chat functionality built using FastAPI and React.
 
 ## Features
 
-- Real-time messaging using Socket.IO
-- Multiple user support
-- Modern UI with Material-UI
-- User join/leave notifications
-- Online users list
-- Message timestamps
-- Responsive design
+- Real-time chat using FastAPI's native WebSocket support
+- Modern, responsive UI optimized for desktop screens
+- User presence tracking
+- System notifications for user join/leave events
+- Glassmorphic design with smooth animations
 
 ## Tech Stack
 
-### Frontend
-- React (Vite)
-- Material-UI
-- Socket.IO Client
-
 ### Backend
-- FastAPI
-- Python Socket.IO
-- Python 3.x
+- FastAPI (Web framework)
+- Uvicorn (ASGI server)
+- WebSockets (Native FastAPI WebSocket support)
+- Python 3.8+
 
-## Setup
+### Frontend
+- React 18
+- Material-UI (MUI) v5
+- Native WebSocket API
+- Styled Components (via MUI styled)
+
+## Recent Updates
+
+- Migrated from Socket.IO to FastAPI's native WebSocket support
+- Enhanced UI with glassmorphism effects and modern design patterns
+- Optimized layout for desktop screens
+- Improved message display and user list components
+- Added smooth animations and transitions
+
+## Installation
 
 ### Backend Setup
-1. Navigate to the backend directory:
+1. Create a virtual environment:
 ```bash
-cd backend
-```
-
-2. Create a virtual environment and activate it:
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows use: venv\Scripts\activate
-```
-
-3. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-4. Run the server:
-```bash
-uvicorn main:app --reload
-```
-
-The backend server will run on http://localhost:8000
-
-### Frontend Setup
-1. Navigate to the frontend directory:
-```bash
-cd frontend
+python -m venv .venv
+source .venv/bin/activate  # On Windows use: .venv\Scripts\activate
 ```
 
 2. Install dependencies:
 ```bash
+cd backend
+pip install -r requirements.txt
+```
+
+### Frontend Setup
+1. Install dependencies:
+```bash
+cd frontend
 npm install
 ```
 
-3. Run the development server:
+## Running the Application
+
+1. Start the backend server:
 ```bash
+cd backend
+source .venv/bin/activate  # On Windows use: .venv\Scripts\activate
+uvicorn main:app --reload
+```
+
+2. Start the frontend development server:
+```bash
+cd frontend
 npm run dev
 ```
 
-The frontend application will be available at http://localhost:5173
+The application will be available at:
+- Frontend: http://localhost:5173
+- Backend: http://localhost:8000
 
-## Usage
+## Environment Variables
 
-1. Open the application in your browser
-2. Enter your username to join the chat
-3. Start sending messages
-4. View online users in the sidebar
-5. System notifications will appear when users join or leave
+### Backend
+- No additional environment variables required
+
+### Frontend
+- No additional environment variables required
+
+## Architecture
+
+### WebSocket Implementation
+The chat system uses FastAPI's built-in WebSocket support for real-time communication:
+- Backend manages WebSocket connections through a `ConnectionManager` class
+- Frontend uses the native WebSocket API for connection handling
+- Messages are broadcasted to all connected clients
+- System messages notify users of join/leave events
+
+### UI Components
+- Modern glassmorphic design with blur effects
+- Responsive message bubbles with animations
+- User list with avatars and online status
+- Optimized layout for desktop screens
+- Custom scrollbars and smooth transitions
 
 ## Contributing
 
